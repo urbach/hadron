@@ -72,14 +72,12 @@ smearedpion <- function(cmicor, mu1=0.0035, mu2=0.0035, kappa=0.161240, t1, t2, 
   ## indices in Cor and E for fitting
   ii <- c((t1p1):(t2p1), (t1p1+T1):(t2p1+T1))
 
-  pionfit <- optim(par, fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
-                   method="BFGS", control=list(trace=0, parscale=1./par), Thalf=Thalf,
-                   x=c((t1):(t2)), y=Cor[ii], err=E[ii], tr = (t2-t1+1))
-  
+  pionfit <- minimiser_call(par, t1=t1, t2=t2, Thalf=Time/2, Cor[ii], E=E[ii])
+  fit.dof <- (t2-t1+1)*2-length(pionfit$par)
+
   fit.mass <- abs(pionfit$par[3])
   fit.f <- 4.*kappa*(mu1+mu2)/2.*pionfit$par[1]/sqrt(fit.mass)^3/sqrt(2.)
   fit.sinhf <- 4.*kappa*(mu1+mu2)/2.*pionfit$par[1]/sqrt(fit.mass)/sinh(fit.mass)/sqrt(2.)
-  fit.dof <- (t2-t1+1)*2-length(pionfit$par)
   fit.chisqr <- pionfit$value
   cat("mass =", abs(pionfit$par[3]), "fps =", fit.f, "fps(sinh) =", fit.sinhf, "chisqr/dof =", fit.chisqr,"/",fit.dof, "=", fit.chisqr/fit.dof, "\n")
   if(debug) {
@@ -95,23 +93,21 @@ smearedpion <- function(cmicor, mu1=0.0035, mu2=0.0035, kappa=0.161240, t1, t2, 
   ## with UWERR method
   if(method == "uwerr" || method == "all") {
     fit.uwerrm <- uwerr(f=fitmasses.smeared, data=W[ii,], S=S, pl=debug, nrep=nrep,
-                        Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par,
-                        fit.routine=fit.routine)
+                        Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par)
 
     fit.uwerrf <- uwerr(f=fitf.smeared, data=W[ii,], S=S, pl=debug, nrep=nrep,
-                        Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par,
-                        fit.routine=fit.routine)
+                        Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par)
   }
   ## or bootstrap
   if(method == "boot" || method == "all") {
     set.seed(seed)
     fit.boot <- boot(data=t(W[ii,]), statistic=fit.smeared.boot, R=boot.R, stype="i",
                      Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par,
-                     kappa=kappa, mu1=mu1, mu2=mu2, fit.routine=fit.routine)
+                     kappa=kappa, mu1=mu1, mu2=mu2)
     
     fit.tsboot <- tsboot(tseries=t(W[ii,]), statistic=fit.smeared.boot, R=boot.R, l=boot.l, sim=tsboot.sim,
                          Time=Time, t1=t1, t2=t2, Err=E[ii], par=pionfit$par,
-                         kappa=kappa, mu1=mu1, mu2=mu2, fit.routine=fit.routine)
+                         kappa=kappa, mu1=mu1, mu2=mu2)
   }
 
   ## compute Chi for each t value
@@ -136,50 +132,40 @@ smearedpion <- function(cmicor, mu1=0.0035, mu2=0.0035, kappa=0.161240, t1, t2, 
   return(invisible(res))
 }
 
+minimiser_call <- function(par, t1, t2, Thalf, Cor, E) {
+  fit.dof <- (t2-t1+1)*2-length(par)
+  pionfit <- optim(par, fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
+                   method="BFGS", control=list(trace=0, parscale=1./par), Thalf=Thalf,
+                   x=c((t1):(t2)), y=Cor, err=E, tr = (t2-t1+1))
+  if(pionfit$value / fit.dof > 1.5) {
+    warning("minimiser_call: initital search didn't converge, redoing with Nelder-Mead\n")
+    pionfit <- optim(par, fn = ChiSqr.smeared,
+                     method="Nelder-Mead", control=list(trace=0, parscale=1./par), Thalf=Thalf,
+                     x=c((t1):(t2)), y=Cor, err=E, tr = (t2-t1+1))
+    pionfit <- optim(pionfit$par, fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
+                     method="BFGS", control=list(trace=0, parscale=1./pionfit$par), Thalf=Thalf,
+                     x=c((t1):(t2)), y=Cor, err=E, tr = (t2-t1+1))
+  }
+  return(invisible(pionfit))
+}
 
-fitmasses.smeared <- function(Cor, Err, t1, t2, Time, par=c(1.,0.1,0.12),
-                              fit.routine="gsl") {
-  Thalf <- Time/2
-  T1 <- Thalf+1
-  t1p1 <- (t1+1)
-  t2p1 <- (t2+1)
-  tr <- (t2-t1+1)
-
-  fit <- optim(par*rnorm(length(par), mean=1., sd=0.001), fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
-               method="BFGS", Thalf=Thalf,
-               control=list(trace=0, parscale=1/par),
-               x=c((t1):(t2)), y=Cor, err=Err, tr=tr)
-
+fitmasses.smeared <- function(Cor, Err, t1, t2, Time, par=c(1.,0.1,0.12)) {
+  
+  fit <- minimiser_call(par*rnorm(length(par), mean=1., sd=0.01), t1=t1, t2=t2, Thalf=Time/2, Cor, E=Err)
+  
   return(abs(fit$par[3]))
 }
 
-fitf.smeared <- function(Cor, Err, t1, t2, Time, par=c(1.,0.1,0.12),
-                         fit.routine="gsl") {
-  Thalf <- Time/2
-  T1 <- Thalf+1
-  t1p1 <- (t1+1)
-  t2p1 <- (t2+1)
-  tr <- (t2-t1+1)
-
-  fit <- optim(par*rnorm(length(par), mean=1., sd=0.001), fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
-               method="BFGS", Thalf=Thalf,
-               control=list(trace=0, parscale=1/par),
-               x=c((t1):(t2)), y=Cor, err=Err, tr=tr)
-
+fitf.smeared <- function(Cor, Err, t1, t2, Time, par=c(1.,0.1,0.12)) {
+  fit <- minimiser_call(par*rnorm(length(par), mean=1., sd=0.01), t1=t1, t2=t2, Thalf=Time/2, Cor, E=Err)
   return(abs(fit$par[1]/sqrt(abs(fit$par[3]))^3))
 }
 
 fit.smeared.boot <- function(Z, d, Err, t1, t2, Time, par=c(1.,0.1,0.12),
-                             kappa, mu1, mu2,
-                             fit.routine="gsl") {
-  Thalf <- Time/2
-  T1 <- Thalf+1
-  t1p1 <- (t1+1)
-  t2p1 <- (t2+1)
-  tr <- (t2-t1+1)
+                             kappa, mu1, mu2) {
+
   Cor <- rep(0., times=length(Z[1,]))
-  if(!missing(d)) {
-    for(i in 1:length(Z[1,])) {
+  if(!missing(d)) {    for(i in 1:length(Z[1,])) {
       Cor[i] = mean(Z[d,(i)])
     }
   }
@@ -188,10 +174,8 @@ fit.smeared.boot <- function(Z, d, Err, t1, t2, Time, par=c(1.,0.1,0.12),
       Cor[i] = mean(Z[,(i)])
     }
   }
-  fit <- optim(par*rnorm(length(par), mean=1., sd=0.001), fn = ChiSqr.smeared, gr = dChiSqrdpar.smeared,
-               method="BFGS", Thalf=Thalf,
-               control=list(trace=0, parscale=1/par),
-               x=c((t1):(t2)), y=Cor, err=Err, tr=tr)
+
+  fit <- minimiser_call(par*rnorm(length(par), mean=1., sd=0.01), t1=t1, t2=t2, Thalf=Time/2, Cor, E=Err)
 
   fit.fpi <- 2*kappa*2*(mu1+mu2)/2./sqrt(2)*abs(fit$par[1])/sqrt(abs(fit$par[3])^3)
   return(c(abs(fit$par[3]), fit.fpi, fit$par[c(1:2)],
