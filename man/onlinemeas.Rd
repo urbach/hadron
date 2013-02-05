@@ -10,8 +10,8 @@
 onlinemeas(data, t1, t2, S=1.5, pl=FALSE, skip=0,
            iobs=1, ind.vec=c(1,3,4,5),
            boot.R=99, boot.l=10, tsboot.sim="geom",
-           method="uwerr", fit.routine="optim", nrep)
-
+           method="uwerr", fit.routine="optim", nrep,
+           oldnorm=FALSE)
 }
 \arguments{
   \item{data}{
@@ -73,6 +73,10 @@ onlinemeas(data, t1, t2, S=1.5, pl=FALSE, skip=0,
     \link{optim} function. The latter choice might be significantly
     slower.
   }
+  \item{oldnorm}{
+    The normalisation of online correlators in tmLQCD changed in January
+    2013. For online measurements before this date set to \code{TRUE}.
+    }
 }
 \value{
   returns an object of \code{class} \code{ofit} with the following items
