@@ -1,4 +1,8 @@
-PKG_LIBS=-lgsl -lgslcblas
-PKG_CFLAGS=-O3 -Wall
+# PKG_LIBS=-lgsl -lgslcblas
+# PKG_CFLAGS=-O3 -Wall
+PKG_LIBS=${GSL_DIR}/lib/libgsl.a ${GSL_DIR}/lib/libgslcblas.a
+PKG_CFLAGS=-I${GSL_DIR}/include -O3 -Wall -lquadmath -lm
+PKG_LDFLAGS=-lquadmath -lm
+
 
 
