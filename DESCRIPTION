@@ -8,7 +8,7 @@ Authors@R: c(person("Carsten", "Urbach", email = "urbach@hiskp.uni-bonn.de",
                   role = c("aut")))
 Author: Bartosz Kostrzewa [aut], Carsten Urbach [aut, cre]
 Maintainer: Carsten Urbach <urbach@hiskp.uni-bonn.de>
-SystemRequirements: Gnu Scientific Library version 1.8 or 1.9, libquadmath
+SystemRequirements: Gnu Scientific Library version 1.8 or 1.9, libquadmath in case QZeta is installed
 Description: package to extract hadronic quantities from Lattice QCD simulations
 Depends: boot
 Suggests: tikzDevice, minpack.lm

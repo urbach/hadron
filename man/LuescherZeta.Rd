@@ -1,6 +1,6 @@
 \name{LuescherZeta}
 \alias{LuescherZeta}
-\title{Computes Lueschers Zeta Funciton}
+\title{Computes Lueschers Zeta Function}
 \description{
 }
 \usage{
