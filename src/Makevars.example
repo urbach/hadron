@@ -1,0 +1,5 @@
+# So 19. Nov 15:42:30 CET 2017
+
+PKG_LIBS=-L${GSL_DIR}/lib -lgsl -lgslcblas -L${QUADMATH_LIB_DIR}/ -lquadmath -lm
+PKG_CFLAGS=-I${GSL_DIR}/include -O3 -Wall
+PKG_LDFLAGS=-L${GSL_DIR}/lib/ -lgsl -lgslcblas  -L${QUADMATH_LIB_DIR}/ -lquadmath -lm
