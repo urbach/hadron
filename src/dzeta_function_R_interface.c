@@ -7,7 +7,6 @@
 #include <Rdefines.h>
 
 #include "dzeta_function.h"
-void pmode_free_arrays();
 
 SEXP DZetaFunction(SEXP qsq_, SEXP n_, SEXP l_, SEXP m_, SEXP dvec_, SEXP gamma_, SEXP A_, SEXP tol_, SEXP Lmax_ ) {
 /*  int dzeta_function (double z[2], double q2, int l, int m, int*dvec, double gamma, double A, double epsAbs, double epsRel, int Lmax); */
@@ -61,7 +60,6 @@ SEXP DZetaFunction(SEXP qsq_, SEXP n_, SEXP l_, SEXP m_, SEXP dvec_, SEXP gamma_
   }
 
   UNPROTECT(10);
-  pmode_free_arrays();
   return(res);
 
 }
