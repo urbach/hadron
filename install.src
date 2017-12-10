@@ -1,7 +1,7 @@
-# So 19. Nov 14:39:53 CET 2017
 # source this file to set the environment variables before calling R CMD INSTALL
 
 export GSL_DIR=/home/marcuspe/software/gsl/gsl-1.8/build.14.04.1-Ubuntu/
 export QUADMATH_LIB_DIR=/usr/lib/gcc/x86_64-linux-gnu/4.8/
+export QUADMATH_INCLUDE_DIR=/usr/lib/gcc/x86_64-linux-gnu/4.8/include/
 
 export LD_LIBRARY_PATH=${GSL_DIR}/lib/:${QUADMATH_LIB_DIR}/:$LD_LIBRARY_PATH
